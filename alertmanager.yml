@@ -1,0 +1,13 @@
+global:
+  slack_api_url: <redacted>
+
+route:
+  receiver: demo
+
+receivers:
+  - name: demo
+    slack_configs:
+      - channel: prometheus-demo
+        text: "{{ .CommonAnnotations.summary }}\n{{ .CommonAnnotations.description }}"
+        send_resolved: true
+

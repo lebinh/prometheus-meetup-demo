@@ -1,0 +1,33 @@
+request_rate_1m = rate(http_requests_total[1m])
+error_rate_1m = rate(http_requests_total{code!="200"}[1m])
+
+ALERT High_Error_Rate
+  IF error_rate_1m > 10
+  FOR 10s
+  ANNOTATIONS {
+    summary = "High error rate on {{ $labels.instance }}",
+    description = "{{ $value | humanize }} non 200 response per second on path '{{ $labels.path }}'"
+  }
+
+
+p95_http_request_duration_seconds_1m = histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[1m]))
+p75_http_request_duration_seconds_1m = histogram_quantile(0.75, rate(http_request_duration_seconds_bucket[1m]))
+p50_http_request_duration_seconds_1m = histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[1m]))
+
+# aggregate success and error response separately because normally error can be returned very fast
+p95_response_time_seconds_1m = histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{code="200"}[1m])) by (le))
+p95_error_response_time_seconds_1m = histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{code!="200"}[1m])) by (le))
+
+ALERT High_Response_Time
+  IF p95_response_time_seconds_1m > 1
+  ANNOTATIONS {
+    summary = "High response time on {{ $labels.instance }}",
+    description = "{{ $value | humanize }} seconds median response time on {{ $labels.instance }}"
+  }
+
+ALERT High_Error_Response_Time
+  IF p95_error_response_time_seconds_1m > 1
+  ANNOTATIONS {
+    summary = "High error response time on {{ $labels.instance }}",
+    description = "{{ $value | humanize }} seconds median error response time on {{ $labels.instance }}"
+  }

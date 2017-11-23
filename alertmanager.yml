@@ -1,5 +1,5 @@
 global:
-  slack_api_url: <redacted>
+  slack_api_url: https://hooks.slack.com/services/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
 
 route:
   receiver: demo
